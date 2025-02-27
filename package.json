@@ -1,0 +1,11 @@
+{
+  "name": "PDF Accesibility tests",
+  "version": "0.1",
+  "description": "Test accesibility of PDFS against Adobe Acrobat API",
+  "author": "Hugo Solar",
+  "dependencies": {
+    "@adobe/pdfservices-node-sdk": "4.1.0",
+    "csv-parser": "^3.0.0",
+    "csv-writer": "^1.6.0"
+  }
+}
