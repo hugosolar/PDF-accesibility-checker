@@ -11,7 +11,7 @@ use WP_CLI;
 use WP_Query;
 
 /**
- * Export Posts with Red tiger videos.
+ * Export All PDFs link within the content of the site.
  *
  * @package MSCM\CLI
  */
