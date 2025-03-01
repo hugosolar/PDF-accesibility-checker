@@ -19,6 +19,15 @@ I've decied using `wget` because it has a built-in feature to follow links in ca
 Then the script will rename every file which isn't a PDF to a PDF since we're sure we're dealing wiht a PDF and PDFs behind the redirects, doesn't respect the filename and not giving the proper extension.
 After making sure we have just PDF files, the script will loop again on pdf files in the directory and run the accesibility checker node script on each file
 
+#### About Adobe acrobat sevice APIs
+In order to use these APIs you need to create [your credentials](https://acrobatservices.adobe.com/dc-integration-creation-app-cdn/main.html?api=pdf-services-api)
+With that you can add those to your Environment varibales
+```
+export PDF_SERVICES_CLIENT_ID=<client_id>
+export PDF_SERVICES_CLIENT_SECRET=<client_secret>
+```
+
+
 use:
 ```
     sh download-files.sh input_csv.csv DirectoryToDownloadFiles/
