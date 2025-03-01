@@ -11,7 +11,7 @@ use WP_CLI;
 use WP_Query;
 
 /**
- * Export All PDFs link within the content of the site.
+ * Export All PDFs link within the content
  *
  * @package MSCM\CLI
  */
@@ -101,12 +101,12 @@ class FindPDFs {
 				$rep_url     = $this->get_url_from_prod( $local_url['host'] );
 				$permalink   = str_replace( $local_url['host'], $rep_url, get_permalink( $pdfurl ) );
 
-				$link_regex = '/https?:\/\/[^\s"]+/';
+				$link_regex = '/<a\s+[^>]*href=["\']([^"\']+)["\']/i';
 
 				preg_match_all( $link_regex, $the_content, $pdf_match );
-				$pdf_match = $pdf_match[0];
+				$pdf_match = $pdf_match[1];
 
-				if ( empty( $pdf_match[0] ) ) {
+				if ( empty( $pdf_match[1] ) ) {
 					break;
 				}
 
@@ -114,7 +114,7 @@ class FindPDFs {
 
 					$url_to_add = $this->maybe_add_url( $pdf_url );
 					if ( empty( $url_to_add ) ) {
-						break;
+						continue;
 					}
 
 					$post_data = array(
@@ -227,7 +227,8 @@ class FindPDFs {
 	 * @return bool True if the URL points to a PDF, false otherwise.
 	 */
 	private function is_pdf_url( $url ) {
-		return preg_match( '/\.pdf$/i', $url );
+		$pdf_pattern = '/^https?:\/\/[^"\']+\.pdf$/i';
+		return preg_match( $pdf_pattern, $url );
 	}
 
 	/**
