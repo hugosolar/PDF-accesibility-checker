@@ -2,10 +2,10 @@
 /**
  * Find PDFs within the site.
  *
- * @package MSX\CLI
+ * @package PDFFinder\CLI
  */
 
-namespace MSX\CLI;
+namespace PDFFinder\CLI;
 
 use WP_CLI;
 use WP_Query;
@@ -18,7 +18,7 @@ use WP_Query;
 class FindPDFs {
 
 	/**
-	 * header for CSV
+	 * Header for CSV
 	 *
 	 * @var array
 	 */
@@ -31,21 +31,25 @@ class FindPDFs {
 		'Post URL',
 	);
 
+	/**
+	 * Redirections cache.
+	 *
+	 * @var array
+	 */
 	private $redirections = array();
 
 	/**
 	 * Exports posts containing PDFs
 	 *
-	 *
 	 * ## EXAMPLES
 	 *
-	 *      wp mscm find-pdfs export output.csv --post_types=posts,page --network=true
+	 *      wp pdf find-pdfs export output.csv --post_types=posts,page --network=true
 	 *
 	 * @subcommand export
 	 *
-	 * @param array $args 	Positional arguments.
+	 * @param array $args       Positional arguments.
 	 * @param array $assoc_args Associative arguments.
-	 * @param bool  $verbose 	Whether to show the output in verbose mode.
+	 * @param bool  $verbose    Whether to show the output in verbose mode.
 	 */
 	public function export( $args, $assoc_args ) {
 		// Fetch our sites.
@@ -156,7 +160,8 @@ class FindPDFs {
 		$return_url = false;
 		if ( $this->is_pdf_url( $pdf_url ) ) {
 			$return_url = $pdf_url;
-		} elseif ( strpos( $pdf_url, 'aka.ms' ) !== false ) {
+		// Check if the URL is a redirect. (using redirect.to as an example)	
+		} elseif ( strpos( $pdf_url, 'redirect.to' ) !== false ) {
 			$redirect_url = $this->get_redirect_url( $pdf_url );
 			if ( $redirect_url && $this->is_pdf_url( $redirect_url ) ) {
 				$return_url = $pdf_url;
@@ -167,21 +172,21 @@ class FindPDFs {
 	}
 
 	/**
-	 * Get the proper prod URL for the pdf.
+	 * Get the proper prod URL for the pdf if we're using local DB.
 	 *
 	 * @param string $host The current local URL of the site.
 	 */
 	public function get_url_from_prod( $host ) {
 		return match ( $host ) {
-			'azure.test'      => 'azure.microsoft.com',
-			'opensource.test' => 'opensource.microsoft.com',
-			'quantum.test'    => 'azure.microsoft.com',
-			default           => 'www.microsoft.com',
+			'site.test'   => 'www.site.com',
+			'local.test'  => 'www.prodsite.com',
+			'mysite.test' => 'mysite.com',
+			default       => 'www.globalsite.com',
 		};
 	}
 
 	/**
-	 * Get all posts with videoplayer/embed block in wp_content.
+	 * Get all PDFs within wp_content.
 	 *
 	 * @param array $post_types The post types to search for.
 	 * @param array $assoc_args The associative arguments.
@@ -273,7 +278,7 @@ class FindPDFs {
 }
 
 try {
-	WP_CLI::add_command( 'mscm find-pdfs', __NAMESPACE__ . '\\FindPDFs' );
+	WP_CLI::add_command( 'pdf find-pdfs', __NAMESPACE__ . '\\FindPDFs' );
  } catch ( \Exception $e ) {
 	die( $e->getMessage() ); // phpcs:ignore
 }
