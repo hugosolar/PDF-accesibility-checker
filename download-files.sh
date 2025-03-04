@@ -1,20 +1,25 @@
 #!/bin/bash
 
-# Check if the CSV file is provided as an argument
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <csv_file>"
-    exit 1
-fi
-
 csv_file=$1
 directoryPath=$2
+pdf_url_row=$3
 
-# Check if the directory exists
-if [ ! -d "$directoryPath" ]; then
-    echo "Directory not found: $directoryPath"
+if [ -z "$pdf_url_row" ]; then
+    #Row where the PDF url is. if not specified, default to 2
+    pdf_url_row=2
+fi
+
+# Check if the CSV file is provided
+if [ -z "$csv_file" ]; then
+    echo "CSV not provided: $csv_file. Usage: ./download-files.sh <csv_file> <directory slug>"
     exit 1
 fi
 
+# Check if the directory is provided
+if [ -z "$directoryPath" ]; then
+    echo "Directory not provided: $directoryPath. Usage: ./download-files.sh <csv_file> <directory slug>"
+    exit 1
+fi
 
 # Check if the CSV file exists
 if [ ! -f "$csv_file" ]; then
@@ -22,29 +27,32 @@ if [ ! -f "$csv_file" ]; then
     exit 1
 fi
 
-# Directory to save downloaded files
-output_dir=$directoryPath
-
-# Create the directory if it doesn't exist
-if [ ! -d "$output_dir" ]; then
+# Check if the directory exists. if not, create it
+if [ ! -d "$directoryPath" ]; then
     mkdir -p "$output_dir"
 fi
 
-# Read the CSV file and download the files from the URL field
-while IFS=, read -r url date title post_url editor code; do
-    # Skip the header row
-    if [ "$url" != "url" ]; then
+# Directory to save downloaded files
+output_dir=$directoryPath
 
-        file_name=$(basename "$url")
-        file_path="$output_dir/$file_name"
-        
-        # Check if the file already exists
-        if [ -f "$file_path" ]; then
-            echo "File already exists: $file_path"
-        else
-            echo "Downloading $url"
-            wget "$url" --directory-prefix="$output_dir" --tries=1 --timeout=20 --no-check-certificate  --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
-        fi
+# Read the first line to get headers
+read -r header_line < "$csv_file"
+
+# Convert headers to an array (preserves spaces)
+IFS=',' read -r -a headers <<< "$header_line"
+
+# Read the rest of the file line by line
+while IFS=',' read -r -a row || [[ -n "$row" ]]; do
+    # Skip the header row
+    file_name=$(basename "${row[pdf_url_row]}")
+    file_path="$output_dir/$file_name"
+    
+    # Check if the file already exists
+    if [ -f "$file_path" ]; then
+        echo "File already exists: $file_path"
+    else
+        echo "Downloading $url"
+        wget "${row[pdf_url_row]}" --directory-prefix="$output_dir" --tries=1 --timeout=20 --no-check-certificate  --user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36"
     fi
 done < "$csv_file"
 

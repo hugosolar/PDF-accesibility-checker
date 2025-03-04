@@ -68,7 +68,7 @@ function extractHeadersFromJson(jsonFilePath) {
 
 let handleName = process.argv[2];
 if ( !handleName ) {
-    handleName = 'file_list_1';
+    handleName = 'startups';
     //throw new Error("Input handle not specified");
 }
 
@@ -124,7 +124,7 @@ let isFirstRow = true;
 fs.createReadStream(inputCsvPath)
     .pipe(csv())
     .on('data', (row) => {
-        const url = row.url;
+        const url = row['PDF URL'];
         let pdfFileName;
 
         if (url.includes('aka.ms')) {
@@ -146,10 +146,10 @@ fs.createReadStream(inputCsvPath)
             const detailedReport = jsonData['Detailed Report'];
             const categories = Object.keys(detailedReport);
             let rowData = {
-                url: row.url,
-                date: row.date,
-                title: row.title,
-                post_url: row.post_url,
+                url: row['PDF URL'],
+                date: row['Post Date'],
+                title: row['Post Title'],
+                post_url: row['Post URL'],
                 Description: summary.Description,
                 Needs_manual_check: summary['Needs manual check'],
                 Passed_manually: summary['Passed manually'],
@@ -172,10 +172,10 @@ fs.createReadStream(inputCsvPath)
 
         } else {
             let rowData = {
-                url: row.url,
-                date: row.date,
-                title: row.title,
-                post_url: row.post_url,
+                url: row['PDF URL'],
+                date: row['Post Date'],
+                title: row['Post Title'],
+                post_url: row['Post URL'],
                 Description: '',
                 Needs_manual_check: '',
                 Passed_manually: '',

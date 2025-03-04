@@ -30,8 +30,10 @@ export PDF_SERVICES_CLIENT_SECRET=<client_secret>
 
 use:
 ```
-    sh download-files.sh input_csv.csv DirectoryToDownloadFiles/
+    sh download-files.sh input_csv.csv DirectoryToDownloadFiles/ <csv_col_number>
 ```
+
+** Note: the csv_row_number parameter indicates in which column position is the PDF url
 
 ### pdf-accesibility-checker.js
 This is a script that runs the PDF accesibility checker on a PDF passed and will return a json report with the details of the test.
@@ -44,7 +46,7 @@ use:
 ### parser-merger.js
 This is the final script that parse and merges CSV input file with PDF accesibility reports and adds each test on a column to make the reports in the spreadsheets more readable
 
-this script will take the first parameter as the same name as the CSV that contains a full list of PDFs from a site and attach to each row all the test on a single column and output the resultant CSV in a folder with the same name
+this script will take the first parameter as the same name as the CSV that contains a full list of PDFs from a site and attach to each row all the test on a single column and output the resultant CSV in a folder with the same name.
 
 use:
 ```
