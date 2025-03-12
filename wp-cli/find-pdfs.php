@@ -41,9 +41,24 @@ class FindPDFs {
 	/**
 	 * Exports posts containing PDFs
 	 *
+	 * ## OPTIONS
+	 *
+	 * [<output>]
+	 * : The name of the output file (default: pdfs-{site}.csv)
+	 *
+	 * [--post_types=<post_types>]
+	 * : Comma separated list of post types to search (default: post)
+	 *
+	 * [--network=<bool>]
+	 * : Whether to search across the entire network (default: false)
+	 * 
+	 * [--start_date=<date>]
+	 * : Filter posts from this date onwards (format: MM-DD-YYYY)
+	 *
 	 * ## EXAMPLES
 	 *
 	 *      wp pdf find-pdfs export output.csv --post_types=posts,page --network=true
+	 *      wp pdf find-pdfs export output.csv --post_types=posts,page --start_date=01-01-2023
 	 *
 	 * @subcommand export
 	 *
@@ -62,6 +77,7 @@ class FindPDFs {
 
 		$post_types = ( ! empty( $assoc_args['post_types'] ) ) ? explode( ',', $assoc_args['post_types'] ) : array( 'post' );
 		$network    = ( ! empty( $assoc_args['network'] ) ) ? true : false;
+		$start_date = ( ! empty( $assoc_args['start_date'] ) ) ? $this->validate_date( $assoc_args['start_date'] ) : '';
 		$sites      = WP_CLI::runcommand( 'site list --fields=blog_id,url,archived --format=json', $options );
 
 		WP_CLI::line( '=== Get PDFs from sites ===' );
@@ -198,13 +214,26 @@ class FindPDFs {
 
 		$args = array(
 			'post_type'              => $post_types,
-			'post_satus'             => 'publish',
+			'post_status'            => 'publish',
 			'posts_per_page'         => -1,
 			'no_found_rows'          => true,
 			'update_post_term_cache' => false,
 			'update_post_meta_cache' => false,
 			'fields'                 => 'ids',
 		);
+
+		// Add date query if start_date is provided
+		if ( ! empty( $assoc_args['start_date'] ) ) {
+			$start_date = $this->validate_date( $assoc_args['start_date'] );
+			if ( $start_date ) {
+				$args['date_query'] = array(
+					array(
+						'after'     => $start_date,
+						'inclusive' => true,
+					),
+				);
+			}
+		}
 
 		$posts_with_pdfs = array();
 		$is_locale       = ( isset( $assoc_args['locale'] ) ) ? true : false;
@@ -215,9 +244,8 @@ class FindPDFs {
 			foreach ( $query->posts as $post_id ) {
 				$the_content = get_post_field( 'post_content', $post_id );
 				$pdf_pattern = '/<a\s+[^>]*href=["\']([^"\']+\.pdf)["\']/i';
-				$pattern_aka = '/<a\s+[^>]*href=["\'](https?:\/\/aka\.ms\/[^"\']+)["\']/i';
-
-				if ( preg_match( $pdf_pattern, $the_content ) || preg_match( $pattern_aka, $the_content ) ) {
+				$pattern_redirect = '/<a\s+[^>]*href=["\'](https?:\/\/redirect\.to\/[^"\']+)["\']/i';
+				if ( preg_match( $pdf_pattern, $the_content ) || preg_match( $pattern_redirect, $the_content ) ) {
 					$posts_with_pdfs[] = $post_id;
 				}
 			}
@@ -248,7 +276,7 @@ class FindPDFs {
 			return $this->redirections[ $url ];
 		}
 
-		WP_CLI::line( 'Checking aka.ms URL: ' . $url );
+		WP_CLI::line( 'Checking redirect URL: ' . $url );
 		$response = get_headers( $url, 1 );
 
 		if ( is_wp_error( $response ) ) {
@@ -272,6 +300,21 @@ class FindPDFs {
 			return $redirect_url;
 		}
 		
+		return false;
+	}
+
+	/**
+	 * Validate and format the date string.
+	 *
+	 * @param string $date Date string in MM-DD-YYYY format.
+	 * @return string|bool Formatted date string or false if invalid.
+	 */
+	private function validate_date( $date ) {
+		$d = \DateTime::createFromFormat( 'm-d-Y', $date );
+		if ( $d && $d->format( 'm-d-Y' ) === $date ) {
+			return $d->format( 'Y-m-d' );
+		}
+		WP_CLI::error( 'Invalid date format. Please use MM-DD-YYYY format.' );
 		return false;
 	}
 
