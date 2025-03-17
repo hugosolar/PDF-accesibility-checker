@@ -14,7 +14,7 @@ To use this CLI command:
 This will output a single CSV file or one CSV per site in case of multisite and `--network=true` flag
 
 #### Options
-* [<output>]* : The name of the output file (default: pdfs-{site}.csv)
+* [<output_file>] * : The name of the output file (default: pdfs-{site}.csv)
 	
 * [--post_types=<post_types>]* : Comma separated list of post types to search (default: post)
 	
