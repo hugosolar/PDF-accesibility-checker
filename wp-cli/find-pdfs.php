@@ -78,7 +78,7 @@ class FindPDFs {
 		$post_types = ( ! empty( $assoc_args['post_types'] ) ) ? explode( ',', $assoc_args['post_types'] ) : array( 'post' );
 		$network    = ( ! empty( $assoc_args['network'] ) ) ? true : false;
 		$start_date = ( ! empty( $assoc_args['start_date'] ) ) ? $this->validate_date( $assoc_args['start_date'] ) : '';
-		$sites      = WP_CLI::runcommand( 'site list --fields=blog_id,url,archived --format=json', $options );
+		$sites      = is_multisite() ? WP_CLI::runcommand( 'site list --fields=blog_id,url,archived --format=json', $options ) : array( array( 'blog_id' => 1, 'url' => get_site_url(), 'archived' => 0 ) );
 
 		WP_CLI::line( '=== Get PDFs from sites ===' );
 
@@ -105,12 +105,18 @@ class FindPDFs {
 			$headers = $this->csv_headers;
 			fputcsv( $file_handler, $headers, $delimiter );
 
-			switch_to_blog( $site['blog_id'] );
+			if ( is_multisite() ) {
+				switch_to_blog( $site['blog_id'] );
+			}
+
 			$posts_with_pdfs = $this->get_posts_with_pdfs( $post_types, $assoc_args, $site['blog_id'] );
-			restore_current_blog();
+
+			if ( is_multisite() ) {
+				restore_current_blog();
+			}
 
 			if ( empty( $posts_with_pdfs ) ) {
-				\WP_CLI::error( 'No posts with PDFs found' );
+				\WP_CLI::warning( 'No posts with PDFs found' );
 			}
 
 			foreach ( $posts_with_pdfs as $pdfurl ) {
@@ -127,7 +133,7 @@ class FindPDFs {
 				$pdf_match = $pdf_match[1];
 
 				if ( empty( $pdf_match[1] ) ) {
-					break;
+					continue;
 				}
 
 				foreach ( $pdf_match as $pdf_url ) {
@@ -211,7 +217,6 @@ class FindPDFs {
 	 * @return array
 	 */
 	public function get_posts_with_pdfs( $post_types, $assoc_args, $blog_id = 1 ) {
-
 		$args = array(
 			'post_type'              => $post_types,
 			'post_status'            => 'publish',
@@ -222,7 +227,7 @@ class FindPDFs {
 			'fields'                 => 'ids',
 		);
 
-		// Add date query if start_date is provided
+		// Add date query if start_date is provided.
 		if ( ! empty( $assoc_args['start_date'] ) ) {
 			$start_date = $this->validate_date( $assoc_args['start_date'] );
 			if ( $start_date ) {
@@ -236,21 +241,35 @@ class FindPDFs {
 		}
 
 		$posts_with_pdfs = array();
-		$is_locale       = ( isset( $assoc_args['locale'] ) ) ? true : false;
-		$network         = ( isset( $assoc_args['network'] ) ) ? true : false;
 		$query           = new WP_Query( $args );
 
 		if ( $query->have_posts() ) {
 			foreach ( $query->posts as $post_id ) {
 				$the_content = get_post_field( 'post_content', $post_id );
-				$pdf_pattern = '/<a\s+[^>]*href=["\']([^"\']+\.pdf)["\']/i';
-				$pattern_redirect = '/<a\s+[^>]*href=["\'](https?:\/\/redirect\.to\/[^"\']+)["\']/i';
-				if ( preg_match( $pdf_pattern, $the_content ) || preg_match( $pattern_redirect, $the_content ) ) {
-					$posts_with_pdfs[] = $post_id;
+				
+				// Find all links in the content
+				$link_pattern = '/<a[^>]+href=([\'"])(.*?)\1[^>]*>/i';
+				if ( preg_match_all( $link_pattern, $the_content, $matches ) ) {
+					foreach ( $matches[2] as $url ) {
+						// Clean the URL
+						$url = html_entity_decode( $url, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+						$url = trim( $url );
+
+						// Skip empty or javascript URLs
+						if ( empty( $url ) || strpos( $url, 'javascript:' ) === 0 ) {
+							continue;
+						}
+
+						// Check if it's a PDF URL or a redirect to PDF
+						if ( $this->is_pdf_url( $url ) || $this->is_potential_pdf_redirect( $url ) ) {
+							$posts_with_pdfs[] = $post_id;
+							break; // Found at least one PDF in this post, no need to continue checking
+						}
+					}
 				}
 			}
 		}
-		return $posts_with_pdfs;
+		return array_unique( $posts_with_pdfs );
 	}
 
 	/**
@@ -260,8 +279,60 @@ class FindPDFs {
 	 * @return bool True if the URL points to a PDF, false otherwise.
 	 */
 	private function is_pdf_url( $url ) {
-		$pdf_pattern = '/^https?:\/\/[^"\']+\.pdf$/i';
-		return preg_match( $pdf_pattern, $url );
+		// Check for direct PDF extension
+		if ( preg_match( '/\.pdf(\?.*)?$/i', $url ) ) {
+			return true;
+		}
+
+		// Check for PDF in the path segments
+		$path_segments = explode( '/', parse_url( $url, PHP_URL_PATH ) );
+		foreach ( $path_segments as $segment ) {
+			if ( preg_match( '/\.pdf(\?.*)?$/i', $segment ) ) {
+				return true;
+			}
+		}
+
+		// Check for PDF in query parameters
+		$query = parse_url( $url, PHP_URL_QUERY );
+		if ( $query ) {
+			parse_str( $query, $params );
+			foreach ( $params as $param ) {
+				if ( preg_match( '/\.pdf(\?.*)?$/i', $param ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if a URL is potentially a redirect to a PDF.
+	 *
+	 * @param string $url The URL to check.
+	 * @return bool True if the URL might redirect to a PDF, false otherwise.
+	 */
+	private function is_potential_pdf_redirect( $url ) {
+		// Common redirect patterns
+		$redirect_patterns = array(
+			'/redirect\.to\//i',
+			'/go\.redirectingat\.com/i',
+			'/url\?.*url=/i', // Google redirect
+			'/download\.aspx/i',
+			'/download\.php/i',
+			'/dl\./i',
+			'/files?\//i',
+			'/documents?\//i',
+			'/publications?\//i',
+		);
+
+		foreach ( $redirect_patterns as $pattern ) {
+			if ( preg_match( $pattern, $url ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
