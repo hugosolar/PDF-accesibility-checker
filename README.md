@@ -14,13 +14,13 @@ To use this CLI command:
 This will output a single CSV file or one CSV per site in case of multisite and `--network=true` flag
 
 #### Options
-* [<output_file>] * : The name of the output file (default: pdfs-{site}.csv)
+**[<output_file>]** : The name of the output file (default: pdfs-{site}.csv)
 	
-* [--post_types=<post_types>]* : Comma separated list of post types to search (default: post)
+**[--post_types=<post_types>]** : Comma separated list of post types to search (default: post)
 	
-* [--network=<bool>] * : Whether to search across the entire network (default: false)
+**[--network=<bool>]** : Whether to search across the entire network (default: false)
 	
-* [--start_date=<date>] * : Filter posts from this date onwards (format: MM-DD-YYYY)
+**[--start_date=<date>]** : Filter posts from this date onwards (format: MM-DD-YYYY)
 
 ### download-files.sh
 This bash script will get data from a passed CSV and download each file described by the `url` column using `wget`
