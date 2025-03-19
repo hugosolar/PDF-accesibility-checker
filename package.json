@@ -1,6 +1,6 @@
 {
   "name": "PDF Accessibility Checker",
-  "version": "0.1",
+  "version": "0.1.0",
   "description": "Test accessibility of PDFs against Adobe Acrobat API",
   "homepage": "https://github.com/10up/PDF-accessibility-checker",
   "license":"MIT",
