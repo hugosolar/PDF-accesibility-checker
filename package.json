@@ -1,7 +1,7 @@
 {
-  "name": "PDF Accesibility tests",
+  "name": "PDF Accessibility tests",
   "version": "0.1",
-  "description": "Test accesibility of PDFS against Adobe Acrobat API",
+  "description": "Test accessibility of PDFs against Adobe Acrobat API",
   "author": "Hugo Solar",
   "dependencies": {
     "@adobe/pdfservices-node-sdk": "4.1.0",
