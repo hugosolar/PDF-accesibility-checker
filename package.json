@@ -1,5 +1,5 @@
 {
-  "name": "PDF Accessibility tests",
+  "name": "PDF Accessibility Checker",
   "version": "0.1",
   "description": "Test accessibility of PDFs against Adobe Acrobat API",
   "author": "Hugo Solar",
