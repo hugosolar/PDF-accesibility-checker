@@ -64,3 +64,7 @@ use:
 ```
     node parser-merger.js final-pdf-report-with-all-the-PDFs
 ```
+
+## Changelog
+
+A complete listing of all notable changes to PDF Accessibility Checker are documented in [CHANGELOG.md](https://github.com/10up/PDF-accessibility-checker/blob/develop/CHANGELOG.md).
