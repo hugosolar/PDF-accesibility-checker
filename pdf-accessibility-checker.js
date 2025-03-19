@@ -1,5 +1,5 @@
 /*
- * PDF accesibility checker using Adobe PDF Services SDK
+ * PDF accessibility checker using Adobe PDF Services SDK
  * This script performs accessibility check on a PDF file and saves the report to a JSON file.
  */
 

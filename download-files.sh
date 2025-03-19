@@ -65,7 +65,7 @@ for file in ${output_dir}/*; do
     mv "$file" "$new_file"
 done
 
-echo "Pass PDF accesibility checker"
+echo "Pass PDF accessibility checker"
 # Loop through all the PDF files in the directory
 for file in "$directoryPath"/*.pdf; do
     # Check if there are no PDF files

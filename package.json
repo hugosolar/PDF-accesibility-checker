@@ -1,8 +1,13 @@
 {
-  "name": "PDF Accesibility tests",
-  "version": "0.1",
-  "description": "Test accesibility of PDFS against Adobe Acrobat API",
-  "author": "Hugo Solar",
+  "name": "PDF Accessibility Checker",
+  "version": "0.1.0",
+  "description": "Test accessibility of PDFs against Adobe Acrobat API",
+  "homepage": "https://github.com/10up/PDF-accessibility-checker",
+  "license":"MIT",
+  "contributors": [
+    "Hugo Solar <hugo.solar@gmail.com>",
+    "10up <https://10up.com/>"
+  ],
   "dependencies": {
     "@adobe/pdfservices-node-sdk": "4.1.0",
     "csv-parser": "^3.0.0",
